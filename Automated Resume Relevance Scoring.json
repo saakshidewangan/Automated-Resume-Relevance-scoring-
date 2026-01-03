@@ -1,0 +1,454 @@
+{
+  "name": "Automated Resume Relevance Scoring",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "16cP4e91jG0ZaUiFOhzjP4vLJwELMFrY8",
+          "mode": "list",
+          "cachedResultName": "Resumes",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/16cP4e91jG0ZaUiFOhzjP4vLJwELMFrY8"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        -32
+      ],
+      "id": "0ff32454-1de9-4fa8-9b26-6e8055db2e2c",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "flVpcnFdptmNoDAa",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1kaqG5OIqK3pPRIz8rg2xOez_SMjMLvDQ",
+          "mode": "list",
+          "cachedResultName": "Jd.pdf",
+          "cachedResultUrl": "https://drive.google.com/file/d/1kaqG5OIqK3pPRIz8rg2xOez_SMjMLvDQ/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        160,
+        -32
+      ],
+      "id": "e0397708-be95-43be-9be4-161e7abfb479",
+      "name": "JD Download",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "flVpcnFdptmNoDAa",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an ATS resume evaluator.\n\nJob Description:\n{{ $json.jd_text }}\n\nCandidate Resume:\n{{ $('Set Resume Text').item.json.resume_text }}\n\n"
+            },
+            {
+              "content": "You are an ATS-style resume evaluator.\n\nAlways respond strictly in **valid JSON**.\nDo NOT include Markdown, explanations, or extra text outside JSON.\n\nThe JSON must have exactly these fields:\n\n{\n  \"name\": \"\",\n  \"email\": \"\",\n  \"mobile\": \"\",\n  \"score\": 0,\n  \"explanation\": \"\",\n  \"matching_skills\": [],\n  \"missing_skills\": []\n}\n",
+              "role": "model"
+            }
+          ]
+        },
+        "simplify": false,
+        "jsonOutput": true,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        736,
+        -32
+      ],
+      "id": "9733ed7a-47fe-475c-a091-1956d77a733c",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Pk3HibPo6s9PUhnl",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{$json[\"id\"]}}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -464,
+        -32
+      ],
+      "id": "a34da464-b07d-4cec-8b45-2a3e10defb66",
+      "name": "Download_file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "flVpcnFdptmNoDAa",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        368,
+        -32
+      ],
+      "id": "f75eea7b-7705-4a79-bb82-43fffadad952",
+      "name": "Extract JD Text"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        -32
+      ],
+      "id": "d634a7f7-6082-401f-a357-49585d9b9b29",
+      "name": "Extract Resume Text"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "159d03d8-65f0-444a-acf3-0c23d76e32b4",
+              "name": "resume_text",
+              "value": "={{$json[\"text\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -32,
+        -32
+      ],
+      "id": "e9a831cd-f56c-4456-8bf3-739aba419d53",
+      "name": "Set Resume Text"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cdde1e9b-3bd7-4e75-8443-80e3f92a7d71",
+              "name": "jd_text",
+              "value": "={{$json[\"text\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        -32
+      ],
+      "id": "6a600e32-2dca-4eba-a3f2-9075ca7339ad",
+      "name": "Set JD text"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.parse($json[\"candidates\"][0][\"content\"][\"parts\"][0][\"text\"]) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1056,
+        -32
+      ],
+      "id": "318497e1-221b-43cf-aadc-eed02ccf75a4",
+      "name": "Extract Gemini JSON"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1UbVk5X-I2kPEVexpxDIJ_qF27DXF7QlxaTwrOxidIfc",
+          "mode": "list",
+          "cachedResultName": "Resume_Evaluation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UbVk5X-I2kPEVexpxDIJ_qF27DXF7QlxaTwrOxidIfc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UbVk5X-I2kPEVexpxDIJ_qF27DXF7QlxaTwrOxidIfc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Candidate Name": "={{ $json.name }}",
+            "Email": "={{$json.email}}",
+            "Mobile": "={{$json.mobile}}",
+            "Relevance Score": "={{$json.score}}",
+            "Explanation": "={{ $json.explanation }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Candidate Name",
+              "displayName": "Candidate Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Mobile",
+              "displayName": "Mobile",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resume File",
+              "displayName": "Resume File",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Relevance Score",
+              "displayName": "Relevance Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Explanation",
+              "displayName": "Explanation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1312,
+        -32
+      ],
+      "id": "3de10d18-1c32-45f0-91dd-0c2e04383827",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BsWADtSNFWNUEZbs",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download_file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JD Download": {
+      "main": [
+        [
+          {
+            "node": "Extract JD Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download_file": {
+      "main": [
+        [
+          {
+            "node": "Extract Resume Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract JD Text": {
+      "main": [
+        [
+          {
+            "node": "Set JD text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Resume Text": {
+      "main": [
+        [
+          {
+            "node": "Set Resume Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Resume Text": {
+      "main": [
+        [
+          {
+            "node": "JD Download",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set JD text": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Extract Gemini JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Gemini JSON": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "7f491e88-6721-4a0a-979e-bbd8f6768214",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3f22af5f4e5b4d9ee9f62fc634ddbd1740fbfd8d223c1843db5eac12de9d8a3a"
+  },
+  "id": "4FUjmZA0W6oHmXcC",
+  "tags": []
+}
